@@ -1,4 +1,22 @@
 SELECT 
+    v_RU.User_Name0 AS 'User Name',
+    v_RU.Full_User_Name0 AS 'Full User Name',
+    v_RU.Unique_User_Name0 AS 'Unique User Name',
+    v_RU.WindowsNT_Domain0 AS 'Domain',
+    v_RU.Agent_Name0 AS 'Agent Name',
+    v_RU.SMS_Assigned_Sites0 AS 'Assigned Sites',
+    v_RU.Client_Version0 AS 'SCCM Client Version'
+FROM 
+    v_Users AS v_RU
+    JOIN v_CollectionMembers AS FCM ON v_RU.ResourceID = FCM.ResourceID
+WHERE 
+    FCM.CollectionID = 'YOUR_COLLECTION_ID'
+ORDER BY 
+    v_RU.User_Name0;
+----------
+
+
+SELECT 
     v_R.System_Name0 AS 'Computer Name',
     v_R.User_Name0 AS 'User Name',
     v_R.Last_Logon_Timestamp0 AS 'Last Logon Time',
