@@ -2,7 +2,6 @@ SELECT
     MD.ResourceID,
     RS.Name0 AS 'Device Name',
     RU.User_Name0 AS 'User Name',
-    RU.Unique_User_Name0 AS 'Unique User Name',
     RU.User_Principal_Name0 AS 'Email',
     MD.DeviceID0,
     MD.DiagonalSize0,
@@ -17,6 +16,6 @@ JOIN
 JOIN 
     v_RA_User_UserGroupName AS RUUGN ON MD.ResourceID = RUUGN.ResourceID
 JOIN 
-    v_R_User AS RU ON RUUGN.Unique_User_Name0 = RU.Unique_User_Name0
+    v_R_User AS RU ON RUUGN.User_Name0 = RU.User_Name0
 ORDER BY 
     MD.ResourceID, MD.TimeStamp;
