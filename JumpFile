@@ -1,1 +1,14 @@
-Test 
+SELECT 
+    v_R.System_Name0 AS 'Computer Name',
+    v_R.User_Name0 AS 'User Name',
+    v_R.Last_Logon_Timestamp0 AS 'Last Logon Time',
+    v_R.Operating_System_Name_and0 AS 'Operating System',
+    v_R.Resource_Domain_OR_Workgr0 AS 'Domain/Workgroup',
+    v_R.Client_Version0 AS 'SCCM Client Version'
+FROM 
+    v_FullCollectionMembership AS FCM
+    JOIN v_R_System AS v_R ON FCM.ResourceID = v_R.ResourceID
+WHERE 
+    FCM.CollectionID = 'YOUR_COLLECTION_ID'
+ORDER BY 
+    v_R.System_Name0;
