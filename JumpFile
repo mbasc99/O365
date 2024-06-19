@@ -1,21 +1,26 @@
-SELECT 
-    MD.ResourceID,
-    RS.Name0 AS 'Device Name',
-    RU.User_Name0 AS 'User Name',
-    RU.User_Principal_Name0 AS 'Email',
-    MD.DeviceID0,
-    MD.DiagonalSize0,
-    MD.Manufacturer0,
-    MD.ManufacturingWeek0,
-    MD.ManufacturingYear0,
-    MD.TimeStamp
-FROM 
-    v_GS_MONITORDETAILS AS MD
-JOIN 
-    v_R_System AS RS ON MD.ResourceID = RS.ResourceID
-JOIN 
-    v_RA_User_UserGroupName AS RUUGN ON MD.ResourceID = RUUGN.ResourceID
-JOIN 
-    v_R_User AS RU ON RUUGN.User_Name0 = RU.User_Name0
-ORDER BY 
-    MD.ResourceID, MD.TimeStamp;
+Select 
+    d.Name0 As HostName,
+    u.Full_User_Name0 As UserName,
+    u.Mail0 As Email,
+    d.is_assigned_to_user0 As IsAssigned,
+    VMD.ResourceID,
+    VMD.DiagonalSize0,
+    VMD.ManufacturingWeek0,
+    VMD.ManufacturingYear0,
+    VMD.Name0,
+    VMD.SerialNumber0,
+    CASE 
+        WHEN VMD.Manufacturer0 = 'SAM' THEN 'Samsung'
+        WHEN VMD.Manufacturer0 = 'HP' THEN 'HP'
+        WHEN VMD.Manufacturer0 = 'DEL' THEN 'Dell'
+        WHEN VMD.Manufacturer0 = 'BVS' THEN 'ASUS'
+        WHEN VMD.Manufacturer0 = 'AOC' THEN 'ViewSonic'
+        WHEN VMD.Manufacturer0 = 'Len' THEN 'Lenovo'
+        ELSE VMD.Manufacturer0
+    END AS Manufacturer0
+From v_GS_MONITORDETAILS VMD
+--Join v_FullCollectionMembership fcm on VMD.ResourceID = fcm.ResourceID
+Join v_R_System d on VMD.ResourceID = d.ResourceID
+Join V_R_user u on d.User_Name0 = u.User_Name0
+Where VMD.Name0 = 'CitrixMonitor'
+Order by VMD.Timestamp
