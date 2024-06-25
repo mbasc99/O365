@@ -1,3 +1,36 @@
+Powershell.exe -ExecutionPolicy Bypass -Command {
+    param (
+        [switch]$downloadexe,
+        [switch]$setrunonce,
+        [string]$logfile = "C:\windows\Logs\Software\Teams2.0Install.log"
+    )
+    
+    # Script content goes here
+    Write-Output "Downloading exe: $downloadexe"
+    Write-Output "Setting run once: $setrunonce"
+    Write-Output "Log file location: $logfile"
+    
+    # Example actions
+    if ($downloadexe) {
+        # Code to download exe
+        Write-Output "Downloading the installer..."
+    }
+    
+    if ($setrunonce) {
+        # Code to set run once
+        Write-Output "Setting the script to run once..."
+    }
+    
+    # Logging example
+    $logMessage = "Deployment completed with parameters -downloadexe: $downloadexe, -setrunonce: $setrunonce"
+    Add-Content -Path $logfile -Value $logMessage
+} -downloadexe -setrunonce -logfile "C:\windows\Logs\Software\Teams2.0Install.log"
+
+
+
+
+
+
 https://www.deploymentresearch.com/force-application-reinstall-in-microsoft-intune-win32-apps/
 
 https://oliverkieselbach.com/2020/11/03/triggering-intune-management-extension-ime-sync/
