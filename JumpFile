@@ -1,3 +1,12 @@
+# Create a Primary subkey Key under Main Key 
+New-Item -Path HKLM:\SOFTWARE\WOW6432Node\CData\RegInfo -Force
+# Create the Key properties 
+New-ItemProperty -Path HKLM:\SOFTWARE\WOW6432Node\CData\RegInfo -Name email -PropertyType String -Value tuser4@Domain.com -Force
+New-ItemProperty -Path HKLM:\SOFTWARE\WOW6432Node\CData\RegInfo -Name name -PropertyType String -Value tuser -Force
+New-ItemProperty -Path HKLM:\SOFTWARE\WOW6432Node\CData\RegInfo -Name canemail -PropertyType String -Value 0 -Force
+New-ItemProperty -Path HKLM:\SOFTWARE\WOW6432Node\CData\RegInfo -Name uid -PropertyType String -Value 153237635 -Force
+
+
 Powershell.exe -ExecutionPolicy Bypass -Command {
     param (
         [switch]$downloadexe,
