@@ -1,4 +1,102 @@
+# Function to uninstall Java while excluding specific versions
+function Uninstall-Java {
+    [CmdletBinding(SupportsShouldProcess)]
+    param (
+        [string]$LogPath = "C:\Windows\Logs\Software\UninstallJava.log",
+        [string]$ExcludedVersion = "Java 8 Update 431"
+    )
 
+    # Initialize the log file
+    if (!(Test-Path $LogPath)) {
+        New-Item -ItemType File -Path $LogPath -Force | Out-Null
+    }
+
+    # Log start time
+    Add-Content -Path $LogPath -Value "`n----- Java Uninstallation Log - $(Get-Date) -----`n"
+
+    Write-Host "Gathering installed programs..." -ForegroundColor Green
+    $uninstallApps = @()
+
+    # Collect uninstall entries from registry
+    $uninstallApps += @(Get-ChildItem HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall |
+        ForEach-Object { Get-ItemProperty $_.PSPath } |
+        Where-Object { $_.DisplayName -and $_.UninstallString -and ($_.DisplayName -like "Java SE Development Kit*" -or $_.DisplayName -like "Java 8 Update*") })
+    
+    $uninstallApps += @(Get-ChildItem HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall |
+        ForEach-Object { Get-ItemProperty $_.PSPath } |
+        Where-Object { $_.DisplayName -and $_.UninstallString -and ($_.DisplayName -like "Java SE Development Kit*" -or $_.DisplayName -like "Java 8 Update*") })
+
+    if (Test-Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall) {
+        $uninstallApps += @(Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall |
+            ForEach-Object { Get-ItemProperty $_.PSPath } |
+            Where-Object { $_.DisplayName -and $_.UninstallString -and ($_.DisplayName -like "Java SE Development Kit*" -or $_.DisplayName -like "Java 8 Update*") })
+    }
+
+    # Filter unique entries
+    $javaApps = $uninstallApps | Sort-Object DisplayName -Unique
+
+    # Log all found Java installations
+    Add-Content -Path $LogPath -Value "Installed JDK/JRE Applications:"
+    foreach ($app in $javaApps) {
+        Add-Content -Path $LogPath -Value " - $($app.DisplayName)"
+    }
+
+    # Process each Java application for uninstallation
+    foreach ($app in $javaApps) {
+        if ($app.DisplayName -like "$ExcludedVersion*") {
+            # Log the excluded version
+            Write-Host "$($app.DisplayName) found but excluded from uninstallation." -ForegroundColor Yellow
+            Add-Content -Path $LogPath -Value "Excluded: $($app.DisplayName)"
+        } else {
+            if ($PSCmdlet.ShouldProcess("$($app.DisplayName)", "Uninstall")) {
+                try {
+                    Write-Host "Uninstalling $($app.DisplayName) ..." -ForegroundColor Yellow
+                    Add-Content -Path $LogPath -Value "Uninstalling: $($app.DisplayName)"
+
+                    # Process msiexec uninstall strings
+                    if ($app.UninstallString -like "msiexec.exe*") {
+                        $uninstallCommand = $app.UninstallString -replace "/I", "/X" -replace "msiexec.exe ", ""
+                        $uninstallCommand = "$uninstallCommand /qn"
+                        
+                        $exitCode = (Start-Process -FilePath "msiexec.exe" -ArgumentList $uninstallCommand -Wait -PassThru).ExitCode
+                    } else {
+                        # Process other uninstall strings
+                        if ($app.UninstallString.StartsWith('"')) {
+                            Invoke-Expression "& $($app.UninstallString)"
+                        } else {
+                            Invoke-Expression "& $($app.UninstallString) /S"
+                        }
+                        $exitCode = $LASTEXITCODE
+                    }
+
+                    Write-Host "$($app.DisplayName) uninstalled - Return code: $exitCode" -ForegroundColor Green
+                    Add-Content -Path $LogPath -Value "Uninstalled: $($app.DisplayName) - Return code: $exitCode"
+                } catch {
+                    Write-Error "Failed to uninstall $($app.DisplayName): $_"
+                    Add-Content -Path $LogPath -Value "Failed to uninstall $($app.DisplayName): $_"
+                }
+            }
+        }
+    }
+
+    # Log completion
+    Add-Content -Path $LogPath -Value "`n----- Uninstallation Completed - $(Get-Date) -----`n"
+    Write-Host "Uninstallation process complete. Check log file at $LogPath" -ForegroundColor Cyan
+}
+
+# Call the function
+Uninstall-Java -LogPath "C:\Windows\Logs\Software\UninstallJava.log" -ExcludedVersion "Java 8 Update 431"
+
+    # Set variables to indicate value and key to set
+    $RegistryPath = 'HKLM:\Software\A\JavaUninstall'
+    $Name     	= 'Removed'
+    $Value    	= '1'
+    # Create the key if it does not exist
+    If (-NOT (Test-Path $RegistryPath)) {
+      New-Item -Path $RegistryPath -Force | Out-Null
+    }  
+    # Now set the value
+    New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType String -Force
 
 https://github.com/stevecapacity/IntunePowershell/blob/main/New%20Teams%20Scripts/Remove%20Classic%20Teams/Remediation/remediate.ps1
 
