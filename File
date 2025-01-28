@@ -1,26 +1,45 @@
-Here are the suggested entries for the **Description** and **Justification** fields in your ServiceNow change ticket:
+The new Azul Discovery Tool was tested in a controlled environment within the current SCCM infrastructure. Testing included verification of WMI class creation and inventory data collection without triggering LSASS calls. Results demonstrated successful data collection and no security or performance impacts. As the tool has been approved by the HCSC Cybersecurity team, there are no anticipated risks for production deployment.
 
-### **Description:**
-We are implementing a new Discovery Tool developed by Azul to replace the existing PowerShell-based discovery tool. The new tool is C# .NET-based and approved by the HCSC Cybersecurity and Defense team. Unlike the older tool, it does not trigger LSASS calls, improving security and system performance.
+Implementation Plan:
+Preparation (Day 1):
 
-As part of this change, we need to add the **'AZUL_JavaLiveInventory'** class to SCCM Client Hardware Inventory. This will allow inventory data to be collected separately in WMI on client machines, ensuring a smooth migration and reducing the risk of missing inventory or misconfigurations.
+Notify stakeholders about the upcoming change.
+Backup existing SCCM Client Hardware Inventory configuration.
+Responsible: SCCM Administrator
+Deployment of 'AZUL_JavaLiveInventory' Class (Day 2):
 
-Upon successful migration from Oracle to Azul, the previous Java discovery-based classes in WMI will be deprecated and removed from HCSC systems.
+Add the new inventory class to SCCM Hardware Inventory.
+Initiate policy updates to client machines.
+Responsible: SCCM Administrator
+Monitoring and Validation (Days 3–5):
 
-**Business Gain:**
-- Enhances security by preventing LSASS call triggers.
-- Ensures accurate inventory tracking during the migration process.
-- Reduces risks of misconfigurations and data loss.
-- Simplifies future decommissioning of legacy Java discovery classes.
+Monitor WMI class creation on sample client machines.
+Validate data collection and ensure no LSASS calls are triggered.
+Responsible: SCCM Team & Cybersecurity Team
+Post-Deployment Review (Day 6):
 
----
+Review feedback from stakeholders.
+Document implementation and any observed issues.
+Responsible: SCCM Team
+Completion (Day 7):
 
-### **Justification:**
-The primary driver for this change is the adoption of a more secure and efficient Discovery Tool from Azul, which has been approved by HCSC Cybersecurity. The older PowerShell-based tool posed security risks by triggering LSASS calls, which could be exploited.
-
-This change will improve security, streamline inventory tracking, and provide a structured approach to the migration. By introducing a separate **'AZUL_JavaLiveInventory'** class, we can validate the migration success before decommissioning the older discovery method. Once migration is complete, we will remove the outdated Java discovery classes from WMI, ensuring a clean and optimized environment.
-
-
+Confirm completion and update ServiceNow ticket.
+Responsible: SCCM Administrator
+Verification Plan:
+Layer 3 - Monitoring Tools:
+Utilize SCCM and Security Monitoring tools to verify:
+Successful deployment of the 'AZUL_JavaLiveInventory' class.
+Accurate data collection in WMI.
+Absence of LSASS call triggers.
+Monitoring period: 3 days post-deployment.
+Responsible: SCCM and Cybersecurity Teams
+Business Validation (Day 6):
+Confirm that inventory data is properly reflected in SCCM reports.
+Engage with end-users for feedback on system performance.
+Responsible: SCCM Team & Business Stakeholders
+Final Approval (Day 7):
+Obtain final sign-off from HCSC Cybersecurity and key stakeholders.
+Responsible: SCCM Manager & Cybersecurity Team
 
 https://github.com/stevecapacity/IntunePowershell/blob/main/New%20Teams%20Scripts/Remove%20Classic%20Teams/Remediation/remediate.ps1
 
