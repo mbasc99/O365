@@ -1,45 +1,4 @@
-The new Azul Discovery Tool was tested in a controlled environment within the current SCCM infrastructure. Testing included verification of WMI class creation and inventory data collection without triggering LSASS calls. Results demonstrated successful data collection and no security or performance impacts. As the tool has been approved by the HCSC Cybersecurity team, there are no anticipated risks for production deployment.
 
-Implementation Plan:
-Preparation (Day 1):
-
-Notify stakeholders about the upcoming change.
-Backup existing SCCM Client Hardware Inventory configuration.
-Responsible: SCCM Administrator
-Deployment of 'AZUL_JavaLiveInventory' Class (Day 2):
-
-Add the new inventory class to SCCM Hardware Inventory.
-Initiate policy updates to client machines.
-Responsible: SCCM Administrator
-Monitoring and Validation (Days 3–5):
-
-Monitor WMI class creation on sample client machines.
-Validate data collection and ensure no LSASS calls are triggered.
-Responsible: SCCM Team & Cybersecurity Team
-Post-Deployment Review (Day 6):
-
-Review feedback from stakeholders.
-Document implementation and any observed issues.
-Responsible: SCCM Team
-Completion (Day 7):
-
-Confirm completion and update ServiceNow ticket.
-Responsible: SCCM Administrator
-Verification Plan:
-Layer 3 - Monitoring Tools:
-Utilize SCCM and Security Monitoring tools to verify:
-Successful deployment of the 'AZUL_JavaLiveInventory' class.
-Accurate data collection in WMI.
-Absence of LSASS call triggers.
-Monitoring period: 3 days post-deployment.
-Responsible: SCCM and Cybersecurity Teams
-Business Validation (Day 6):
-Confirm that inventory data is properly reflected in SCCM reports.
-Engage with end-users for feedback on system performance.
-Responsible: SCCM Team & Business Stakeholders
-Final Approval (Day 7):
-Obtain final sign-off from HCSC Cybersecurity and key stakeholders.
-Responsible: SCCM Manager & Cybersecurity Team
 
 https://github.com/stevecapacity/IntunePowershell/blob/main/New%20Teams%20Scripts/Remove%20Classic%20Teams/Remediation/remediate.ps1
 
