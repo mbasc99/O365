@@ -1,4 +1,26 @@
-"Addition of 'AZUL_JavaLiveInventory' Class to SCCM Client Hardware Inventory for Azul Discovery Tool Migration"
+Here are the suggested entries for the **Description** and **Justification** fields in your ServiceNow change ticket:
+
+### **Description:**
+We are implementing a new Discovery Tool developed by Azul to replace the existing PowerShell-based discovery tool. The new tool is C# .NET-based and approved by the HCSC Cybersecurity and Defense team. Unlike the older tool, it does not trigger LSASS calls, improving security and system performance.
+
+As part of this change, we need to add the **'AZUL_JavaLiveInventory'** class to SCCM Client Hardware Inventory. This will allow inventory data to be collected separately in WMI on client machines, ensuring a smooth migration and reducing the risk of missing inventory or misconfigurations.
+
+Upon successful migration from Oracle to Azul, the previous Java discovery-based classes in WMI will be deprecated and removed from HCSC systems.
+
+**Business Gain:**
+- Enhances security by preventing LSASS call triggers.
+- Ensures accurate inventory tracking during the migration process.
+- Reduces risks of misconfigurations and data loss.
+- Simplifies future decommissioning of legacy Java discovery classes.
+
+---
+
+### **Justification:**
+The primary driver for this change is the adoption of a more secure and efficient Discovery Tool from Azul, which has been approved by HCSC Cybersecurity. The older PowerShell-based tool posed security risks by triggering LSASS calls, which could be exploited.
+
+This change will improve security, streamline inventory tracking, and provide a structured approach to the migration. By introducing a separate **'AZUL_JavaLiveInventory'** class, we can validate the migration success before decommissioning the older discovery method. Once migration is complete, we will remove the outdated Java discovery classes from WMI, ensuring a clean and optimized environment.
+
+
 
 https://github.com/stevecapacity/IntunePowershell/blob/main/New%20Teams%20Scripts/Remove%20Classic%20Teams/Remediation/remediate.ps1
 
