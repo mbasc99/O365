@@ -1,4 +1,4 @@
-# Function to uninstall Java while excluding specific versions
+# Function to uninstall Java while excluding a specific version and remove leftover directories
 function Uninstall-Java {
     [CmdletBinding(SupportsShouldProcess)]
     param (
@@ -6,98 +6,152 @@ function Uninstall-Java {
         [string]$ExcludedVersion = "Java 8 Update 431"
     )
 
-    # Initialize the log file
+    # Ensure log file exists
     if (!(Test-Path $LogPath)) {
         New-Item -ItemType File -Path $LogPath -Force | Out-Null
     }
 
-    # Log start time
-    Add-Content -Path $LogPath -Value "`n----- Java Uninstallation Log - $(Get-Date) -----`n"
+    # Function to write logs with timestamps
+    function Write-Log {
+        param ([string]$Message)
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        Add-Content -Path $LogPath -Value "[$timestamp] $Message"
+    }
 
-    Write-Host "Gathering installed programs..." -ForegroundColor Green
+    Write-Log "`n----- Java Uninstallation Log - $(Get-Date) -----`n"
+    Write-Host "Gathering installed Java versions..." -ForegroundColor Green
+
     $uninstallApps = @()
 
-    # Collect uninstall entries from registry
-    $uninstallApps += @(Get-ChildItem HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall |
-        ForEach-Object { Get-ItemProperty $_.PSPath } |
-        Where-Object { $_.DisplayName -and $_.UninstallString -and ($_.DisplayName -like "Java SE Development Kit*" -or $_.DisplayName -like "Java 8 Update*") })
-    
-    $uninstallApps += @(Get-ChildItem HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall |
-        ForEach-Object { Get-ItemProperty $_.PSPath } |
-        Where-Object { $_.DisplayName -and $_.UninstallString -and ($_.DisplayName -like "Java SE Development Kit*" -or $_.DisplayName -like "Java 8 Update*") })
+    # Collect Java uninstall entries from registry
+    $registryPaths = @(
+        "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall"
+    )
 
-    if (Test-Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall) {
-        $uninstallApps += @(Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall |
-            ForEach-Object { Get-ItemProperty $_.PSPath } |
-            Where-Object { $_.DisplayName -and $_.UninstallString -and ($_.DisplayName -like "Java SE Development Kit*" -or $_.DisplayName -like "Java 8 Update*") })
+    foreach ($path in $registryPaths) {
+        if (Test-Path $path) {
+            $uninstallApps += @(Get-ChildItem $path -ErrorAction SilentlyContinue |
+                ForEach-Object { Get-ItemProperty $_.PSPath } |
+                Where-Object { $_.DisplayName -and $_.UninstallString -and ($_.DisplayName -like "Java SE Development Kit*" -or $_.DisplayName -like "Java 8 Update*") })
+        }
     }
 
-    # Filter unique entries
+    # Filter unique Java applications
     $javaApps = $uninstallApps | Sort-Object DisplayName -Unique
 
-    # Log all found Java installations
-    Add-Content -Path $LogPath -Value "Installed JDK/JRE Applications:"
+    # Log detected installations
+    Write-Log "Detected Java versions:"
     foreach ($app in $javaApps) {
-        Add-Content -Path $LogPath -Value " - $($app.DisplayName)"
+        Write-Log " - $($app.DisplayName)"
     }
 
-    # Process each Java application for uninstallation
+    $installPaths = @{}
+    
+    # Process uninstallation
     foreach ($app in $javaApps) {
         if ($app.DisplayName -like "$ExcludedVersion*") {
-            # Log the excluded version
-            Write-Host "$($app.DisplayName) found but excluded from uninstallation." -ForegroundColor Yellow
-            Add-Content -Path $LogPath -Value "Excluded: $($app.DisplayName)"
+            Write-Host "$($app.DisplayName) is excluded from uninstallation." -ForegroundColor Yellow
+            Write-Log "Excluded: $($app.DisplayName)"
+
+            # Store its installation path to avoid deleting it later
+            if ($app.InstallLocation -and (Test-Path $app.InstallLocation)) {
+                $installPaths[$app.DisplayName] = $app.InstallLocation
+            }
         } else {
             if ($PSCmdlet.ShouldProcess("$($app.DisplayName)", "Uninstall")) {
                 try {
-                    Write-Host "Uninstalling $($app.DisplayName) ..." -ForegroundColor Yellow
-                    Add-Content -Path $LogPath -Value "Uninstalling: $($app.DisplayName)"
+                    Write-Host "Uninstalling $($app.DisplayName)..." -ForegroundColor Yellow
+                    Write-Log "Attempting to uninstall: $($app.DisplayName)"
+
+                    # Store installation path before uninstalling
+                    if ($app.InstallLocation -and (Test-Path $app.InstallLocation)) {
+                        $installPaths[$app.DisplayName] = $app.InstallLocation
+                    }
 
                     # Process msiexec uninstall strings
                     if ($app.UninstallString -like "msiexec.exe*") {
                         $uninstallCommand = $app.UninstallString -replace "/I", "/X" -replace "msiexec.exe ", ""
                         $uninstallCommand = "$uninstallCommand /qn"
                         
-                        $exitCode = (Start-Process -FilePath "msiexec.exe" -ArgumentList $uninstallCommand -Wait -PassThru).ExitCode
+                        $process = Start-Process -FilePath "msiexec.exe" -ArgumentList $uninstallCommand -Wait -PassThru
+                        $exitCode = $process.ExitCode
                     } else {
-                        # Process other uninstall strings
-                        if ($app.UninstallString.StartsWith('"')) {
-                            Invoke-Expression "& $($app.UninstallString)"
+                        # Handle other uninstall strings
+                        $uninstallCommand = $app.UninstallString
+                        if ($uninstallCommand.StartsWith('"')) {
+                            $process = Start-Process -FilePath ( $uninstallCommand -replace '"', '') -ArgumentList "/S" -Wait -PassThru
                         } else {
-                            Invoke-Expression "& $($app.UninstallString) /S"
+                            $process = Start-Process -FilePath $uninstallCommand -ArgumentList "/S" -Wait -PassThru
                         }
-                        $exitCode = $LASTEXITCODE
+                        $exitCode = $process.ExitCode
                     }
 
-                    Write-Host "$($app.DisplayName) uninstalled - Return code: $exitCode" -ForegroundColor Green
-                    Add-Content -Path $LogPath -Value "Uninstalled: $($app.DisplayName) - Return code: $exitCode"
+                    # Check exit codes
+                    if ($exitCode -eq 0 -or $exitCode -eq 1605 -or $exitCode -eq 1614 -or $exitCode -eq 3010) {
+                        Write-Host "$($app.DisplayName) uninstalled successfully. Exit code: $exitCode" -ForegroundColor Green
+                        Write-Log "Successfully uninstalled: $($app.DisplayName) - Exit code: $exitCode"
+                    } else {
+                        Write-Error "Failed to uninstall $($app.DisplayName). Exit code: $exitCode"
+                        Write-Log "Failed to uninstall: $($app.DisplayName) - Exit code: $exitCode"
+                    }
                 } catch {
-                    Write-Error "Failed to uninstall $($app.DisplayName): $_"
-                    Add-Content -Path $LogPath -Value "Failed to uninstall $($app.DisplayName): $_"
+                    Write-Error "Error while uninstalling $($app.DisplayName): $_"
+                    Write-Log "Error: $($app.DisplayName) - $_"
                 }
             }
         }
     }
 
-    # Log completion
-    Add-Content -Path $LogPath -Value "`n----- Uninstallation Completed - $(Get-Date) -----`n"
-    Write-Host "Uninstallation process complete. Check log file at $LogPath" -ForegroundColor Cyan
+    # Remove leftover installation directories (excluding the excluded version)
+    if ($installPaths.Count -gt 0) {
+        Write-Host "Removing leftover installation directories..." -ForegroundColor Cyan
+        Write-Log "Removing leftover Java installation directories..."
+
+        foreach ($entry in $installPaths.GetEnumerator()) {
+            $javaVersion = $entry.Key
+            $path = $entry.Value
+
+            if ($javaVersion -like "$ExcludedVersion*") {
+                Write-Host "Skipping removal of installation folder for excluded version: $javaVersion" -ForegroundColor Yellow
+                Write-Log "Skipping directory removal: $path (Excluded Version)"
+            } else {
+                if (Test-Path $path) {
+                    try {
+                        Remove-Item -Path $path -Recurse -Force -ErrorAction Stop
+                        Write-Host "Removed: $path" -ForegroundColor Green
+                        Write-Log "Removed directory: $path"
+                    } catch {
+                        Write-Error "Failed to remove $path: $_"
+                        Write-Log "Failed to remove directory: $path - $_"
+                    }
+                }
+            }
+        }
+    }
+
+    # Final log entry
+    Write-Log "`n----- Uninstallation Completed - $(Get-Date) -----`n"
+    Write-Host "Uninstallation process complete. Log saved at $LogPath" -ForegroundColor Cyan
 }
 
-# Call the function
+# Run the function
 Uninstall-Java -LogPath "C:\Windows\Logs\Software\UninstallJava.log" -ExcludedVersion "Java 8 Update 431"
 
-    # Set variables to indicate value and key to set
-    $RegistryPath = 'HKLM:\Software\A\JavaUninstall'
-    $Name     	= 'Removed'
-    $Value    	= '1'
-    # Create the key if it does not exist
-    If (-NOT (Test-Path $RegistryPath)) {
-      New-Item -Path $RegistryPath -Force | Out-Null
-    }  
-    # Now set the value
-    New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType String -Force
+# Set a registry flag indicating uninstallation completion
+$RegistryPath = 'HKLM:\Software\ACG\JavaUninstall'
+$Name         = 'Removed'
+$Value        = '1'
 
+# Ensure registry key exists
+if (-NOT (Test-Path $RegistryPath)) {
+    New-Item -Path $RegistryPath -Force | Out-Null
+}
+
+# Set registry value
+New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType String -Force | Out-Null
+Write-Host "Registry flag set: $RegistryPath\$Name = $Value" -ForegroundColor Green
 https://github.com/stevecapacity/IntunePowershell/blob/main/New%20Teams%20Scripts/Remove%20Classic%20Teams/Remediation/remediate.ps1
 
 
