@@ -1,3 +1,4 @@
+
 # Function to uninstall Java while excluding a specific version and remove leftover directories
 function Uninstall-Java {
     [CmdletBinding(SupportsShouldProcess)]
@@ -34,7 +35,9 @@ function Uninstall-Java {
         if (Test-Path $path) {
             $uninstallApps += @(Get-ChildItem $path -ErrorAction SilentlyContinue |
                 ForEach-Object { Get-ItemProperty $_.PSPath } |
-                Where-Object { $_.DisplayName -and $_.UninstallString -and ($_.DisplayName -like "Java SE Development Kit*" -or $_.DisplayName -like "Java 8 Update*") })
+                Where-Object { 
+    $_.DisplayName -and $_.UninstallString -and ($_.DisplayName -match "Java\s+\d+\s+Update" -or $_.DisplayName -like "Java SE Development Kit*") 
+})
         }
     }
 
@@ -123,7 +126,7 @@ function Uninstall-Java {
                         Write-Host "Removed: $path" -ForegroundColor Green
                         Write-Log "Removed directory: $path"
                     } catch {
-                        Write-Error "Failed to remove $path: $_"
+                        Write-Error "Failed to remove $path $_"
                         Write-Log "Failed to remove directory: $path - $_"
                     }
                 }
@@ -138,20 +141,6 @@ function Uninstall-Java {
 
 # Run the function
 Uninstall-Java -LogPath "C:\Windows\Logs\Software\UninstallJava.log" -ExcludedVersion "Java 8 Update 431"
-
-# Set a registry flag indicating uninstallation completion
-$RegistryPath = 'HKLM:\Software\ACG\JavaUninstall'
-$Name         = 'Removed'
-$Value        = '1'
-
-# Ensure registry key exists
-if (-NOT (Test-Path $RegistryPath)) {
-    New-Item -Path $RegistryPath -Force | Out-Null
-}
-
-# Set registry value
-New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType String -Force | Out-Null
-Write-Host "Registry flag set: $RegistryPath\$Name = $Value" -ForegroundColor Green
 https://github.com/stevecapacity/IntunePowershell/blob/main/New%20Teams%20Scripts/Remove%20Classic%20Teams/Remediation/remediate.ps1
 
 
