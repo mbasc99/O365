@@ -1,7 +1,1 @@
 
-Java Deployment Summary
-Azul Java Remediation Package v4.0: Currently in UAT testing, containing the latest Azul JRE 8 U 442. Upon successful testing, Alpha and Beta deployments will follow, along with image updates.
-Azul Java Inventory & Discovery Tool v5.0: Deployment completed for Windows 10 systems (CHG0764186). Deployment for Windows 11 systems is scheduled for completion by the end of this week (CHG0766933).
-Discovery Data: Latest Azul discovery data will be available by Monday, 02/24.
-Squirrel SQL Client: Latest version is in UAT testing. Upon successful completion, a throttled deployment will target 1,500 users.
-Migration Strategy Discussion: A meeting is planned for Friday (02/21) or early next week with Azul to finalize the migration approach. If packaging is completed on time, we anticipate starting the migration within 1–2 weeks.
