@@ -1,12 +1,1 @@
 
-$scriptDirectory = "C:\Path\To\Your\MSI"  
-
-Start-Process msiexec.exe -ArgumentList @(
-    "/i `"$scriptDirectory\6.msi`"",
-    "TRANSFORMS=`"$scriptDirectory\z41-win_i686.mst`"",
-    "REBOOT=ReallySuppress",
-    "MSIDISABLEREMRESTART=1",
-    "MSIRESTARTMANAGERCONTROL=Disable",
-    "/L*V `C:\Windows\Logs\Software\zul-win_i686_Install.log`"",
-    "/QB!"
-) -NoNewWindow -Wait -PassThru
