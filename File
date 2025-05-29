@@ -1,13 +1,1 @@
-
-
-
-Hi Team,
-
-The total number of vulnerable devices for **Winverify** has dropped significantly over the past 4–5 days. The reboots that occurred during our monthly patch deployment have clearly helped reduce these numbers.
-
-Currently, we still have approximately **400 devices** showing as vulnerable (see attached). Since this continues to be a moving target, I plan to wait for the patch cycle and subsequent device reboots to complete this week.
-
-In the meantime, I’ve created and piloted my package on a few systems, and everything looks good so far. The only delay is with the reporting, which is taking some time to reflect accurately in the **Tanium Console**.
-
-I also have the **SCCM package ready and on standby**. If needed, I’ll schedule a Change Order (CO) to deploy it to all identified vulnerable machines next week in case the numbers don’t drop further.
-
+.
