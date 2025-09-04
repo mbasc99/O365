@@ -1,22 +1,11 @@
-# Define variables
-$InstallerPath = "C:\Temp\De_5.15.10.14_A31_01.EXE"
-$InstallerArgs = "/s"   # Replace with correct silent switch if different
+# Get the version of "Dell ControlVault w/o Fingerprint Sensor"
+$driver = Get-WmiObject -Class Win32_PnpSignedDriver |
+    Where-Object { $_.DeviceName -like "Dell ControlVault w/o Fingerprint Sensor*" }
 
-# Get system information
-$ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem
-$Make  = $ComputerSystem.Manufacturer
-$Model = $ComputerSystem.Model
-
-Write-Host "Detected Make: $Make"
-Write-Host "Detected Model: $Model"
-
-# Check if Dell 5400
-if ($Make -match "Dell" -and $Model -match "5400") {
-    Write-Host "Match found. Proceeding with installation..."
-    Start-Process -FilePath $InstallerPath -ArgumentList $InstallerArgs -Wait -NoNewWindow
-    Write-Host "Installation completed."
+if ($driver) {
+    Write-Output "Driver Name : $($driver.DeviceName)"
+    Write-Output "Driver Version : $($driver.DriverVersion)"
+    Write-Output "Driver Provider : $($driver.DriverProviderName)"
 } else {
-    Write-Host "This device is not Dell 5400. Exiting script."
-    exit 0
+    Write-Output "Dell ControlVault w/o Fingerprint Sensor driver not found."
 }
-
