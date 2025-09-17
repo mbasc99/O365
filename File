@@ -1,11 +1,9 @@
-# Get the version of "Dell ControlVault w/o Fingerprint Sensor"
-$driver = Get-WmiObject -Class Win32_PnpSignedDriver |
-    Where-Object { $_.DeviceName -like "Dell ControlVault w/o Fingerprint Sensor*" }
+Here are some of the key actions we’ve taken to address the issue:
 
-if ($driver) {
-    Write-Output "Driver Name : $($driver.DeviceName)"
-    Write-Output "Driver Version : $($driver.DriverVersion)"
-    Write-Output "Driver Provider : $($driver.DriverProviderName)"
-} else {
-    Write-Output "Dell ControlVault w/o Fingerprint Sensor driver not found."
-}
+We asked the MSP to focus on spot-checking and double-checking Chrome deployments. They targeted all devices with versions lower than 138 and have been working to bring them up to date. There’s still a bit more to cover here.
+
+We identified around 600 devices running Edge version 100. The challenge with this is that unresolved vulnerabilities in earlier stages tend to multiply quickly. MSP has already started addressing this issue to prevent escalation.
+
+MSP also collaborated with the VTT and DSS teams to remove unused or stale devices that are no longer being used by end users.
+
+Overall, while there’s still some work left to address systems with older versions of Chrome and Edge, the progress is very encouraging. It’s good to see our efforts making a noticeable impact and helping reduce the overall vulnerability numbers.
