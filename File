@@ -1,1 +1,54 @@
 
+Here are some additional items you might consider including in your team’s feedback, based on their end goal of leveraging WinGet to keep Azul JDKs up to date and patched:
+
+**Additional Items to Address for WinGet (Feedback Suggestions):**
+
+* **Dependency Handling:** Confirm how WinGet will handle Azul JDK dependencies or side-by-side installations, especially if multiple versions are required.
+* **Compatibility Testing:** Validate that Azul JDK updates via WinGet don’t break applications that rely on specific JDK versions.
+* **Version Pinning / Exception Handling:** Define if there will be exceptions for certain apps that require a fixed JDK version and how those will be managed.
+* **Update Frequency:** Establish a cadence for how often Azul JDK (and potentially other tools) will be checked and updated (e.g., monthly, quarterly).
+* **Monitoring & Reporting:** Define how patch/update compliance will be reported—both within WinGet and SCCM dashboards.
+* **Fallback Sources:** Confirm what happens if Nexus does not have the required JDK package available (backup source, delay, or fail).
+* **Security Validation:** Ensure packages downloaded and deployed via WinGet/Nexus are signed and validated to avoid supply-chain risk.
+* **Automation Readiness:** Check if scripting or Intune/SCCM integration can automate package sync and deployment approvals.
+* **Rollback Timeline:** Define SLA on how quickly rollback should be completed if Azul JDK causes breakages in production workloads.
+* **Stakeholder Approval Workflow:** Ensure application owners are included in the approval cycle before JDK updates are pushed org-wide.
+
+Would you like me to draft a **formal email response** that incorporates these points (structured like feedback to the requesting team), so you can send it directly?
+
+
+
+----------
+
+Here’s a clean outline you can send as an email to your manager to summarize **current status** and the **plan forward** for Winget/ Azul JDK patching:
+
+---
+
+**Subject:** Status and Plan for Winget Implementation (Azul JDK Patching)
+
+Hi [Manager’s Name],
+
+As requested, here’s an outline of the current status and our plan regarding Winget adoption to help us keep Azul’s JDKs up to date:
+
+**Current Status:**
+
+* Other team has documented initial items for Winget usage (deployment process, Nexus integration, rollback, rollout methods, etc.).
+* End goal is to leverage Winget for maintaining Azul JDK updates.
+* Initial gaps identified include dependency handling, version control, rollback processes, and monitoring/reporting integration with SCCM.
+
+**Plan (Next Steps):**
+
+1. Review and finalize the checklist from the other team, including our feedback additions (dependency handling, version pinning, update cadence, security validation, monitoring/reporting).
+2. Align with SCCM/Intune team on integration steps, notification process, and rollout options.
+3. Define test strategy for JDK updates, including rollback/mitigation procedures and impact analysis for applications dependent on specific versions.
+4. Establish ownership for package submission/maintenance, rollout approvals, and ongoing monitoring.
+5. Set a target timeline for pilot rollout in SCCM with Azul JDK as the first package to validate the end-to-end process.
+6. Document and communicate the governance process for long-term Winget usage across other apps (beyond JDK).
+
+This will give us a clear framework for progressing with Winget adoption while ensuring reliability and minimal impact on business applications.
+
+Best regards,
+[Your Name]
+
+---
+
