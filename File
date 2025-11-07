@@ -1,1 +1,52 @@
 
+# Define target app name and minimum version to keep
+$AppName = "*Microsoft.RawImage*"
+$KeepVersion = [version]"2.5.7.0"
+
+Write-Host "`n=== Removing older versions of $AppName (< $KeepVersion) ===`n" -ForegroundColor Cyan
+
+# --- Step 1: Remove installed Appx packages for all users ---
+$apps = Get-AppxPackage -AllUsers | Where-Object { $_.Name -like $AppName }
+
+foreach ($app in $apps) {
+    $currentVersion = [version]$app.Version
+
+    if ($currentVersion -lt $KeepVersion) {
+        Write-Host "Removing $($app.Name) version $($app.Version) for user $($app.PackageUserInformation.UserSecurityId)" -ForegroundColor Yellow
+        
+        try {
+            Remove-AppxPackage -Package $app.PackageFullName -AllUsers -ErrorAction Stop
+            Write-Host "✅ Successfully removed $($app.PackageFullName)" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "❌ Failed to remove $($app.PackageFullName): $_" -ForegroundColor Red
+        }
+    }
+    else {
+        Write-Host "Skipping (Keeping) $($app.Name) version $($app.Version)" -ForegroundColor Gray
+    }
+}
+
+# --- Step 2: Remove provisioned Appx packages from image ---
+$provApps = Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -like $AppName }
+
+foreach ($prov in $provApps) {
+    $provVersion = [version]$prov.Version
+
+    if ($provVersion -lt $KeepVersion) {
+        Write-Host "`nRemoving provisioned package $($prov.DisplayName) version $($prov.Version)" -ForegroundColor Yellow
+
+        try {
+            Remove-AppxProvisionedPackage -Online -PackageName $prov.PackageName -ErrorAction Stop | Out-Null
+            Write-Host "✅ Successfully removed provisioned package $($prov.PackageName)" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "❌ Failed to remove provisioned package $($prov.PackageName): $_" -ForegroundColor Red
+        }
+    }
+    else {
+        Write-Host "Skipping (Keeping) provisioned package $($prov.DisplayName) version $($prov.Version)" -ForegroundColor Gray
+    }
+}
+
+Write-Host "`n=== Cleanup complete ===`n" -ForegroundColor Cyan
