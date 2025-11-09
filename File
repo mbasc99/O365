@@ -1,1 +1,126 @@
 
+# ==============================================================
+# Script: Maintain Microsoft.RawImageExtension Appx Packages
+# Author:
+# Logic:
+#   1. If version >= 2.5.7.0 is installed, keep it and remove older versions.
+#   2. If not installed, install from local media in $PSScriptRoot.
+#   3. Remove older versions (installed and provisioned).
+#   4. Ensure correct version is provisioned for new users.
+# ==============================================================
+
+$AppName = "*Microsoft.RawImage*"
+$KeepVersion = [version]"2.5.7.0"
+
+Write-Host "`n=== Checking for Microsoft.RawImageExtension (v$KeepVersion or newer) ===`n" -ForegroundColor Cyan
+
+# --- Step 1: Collect installed and provisioned packages ---
+$installedApps   = Get-AppxPackage -AllUsers | Where-Object { $_.Name -like $AppName }
+$provisionedApps = Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -like $AppName }
+
+# --- Step 2: Determine if required version or higher exists ---
+$hasRequiredVersion = $false
+foreach ($app in $installedApps) {
+    if ([version]$app.Version -ge $KeepVersion) {
+        $hasRequiredVersion = $true
+        break
+    }
+}
+if (-not $hasRequiredVersion) {
+    foreach ($prov in $provisionedApps) {
+        if ([version]$prov.Version -ge $KeepVersion) {
+            $hasRequiredVersion = $true
+            break
+        }
+    }
+}
+
+# --- Step 3: If no required version found, install it from local media ---
+if (-not $hasRequiredVersion) {
+    Write-Host "⚠️  No version $KeepVersion or newer found. Attempting local installation..." -ForegroundColor Yellow
+
+    # Look for appx/appxbundle in script directory
+    $localPackage = Get-ChildItem -Path $PSScriptRoot -Include *.appx, *.appxbundle -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "Microsoft.RawImage*" } | Select-Object -First 1
+
+    if ($null -eq $localPackage) {
+        Write-Host "❌ No local Microsoft.RawImage package found in $PSScriptRoot. Aborting." -ForegroundColor Red
+        return
+    }
+
+    try {
+        Add-AppxPackage -Path $localPackage.FullName -ErrorAction Stop
+        Write-Host "✅ Successfully installed $($localPackage.Name)" -ForegroundColor Green
+        $hasRequiredVersion = $true
+    }
+    catch {
+        Write-Host "❌ Failed to install $($localPackage.Name): $_" -ForegroundColor Red
+        return
+    }
+}
+else {
+    Write-Host "✅ Found Microsoft.RawImageExtension version $KeepVersion or newer. Proceeding with cleanup..." -ForegroundColor Green
+}
+
+# Refresh the app list post-install
+$installedApps   = Get-AppxPackage -AllUsers | Where-Object { $_.Name -like $AppName }
+$provisionedApps = Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -like $AppName }
+
+# --- Step 4: Remove older installed versions ---
+foreach ($app in $installedApps) {
+    $currentVersion = [version]$app.Version
+
+    if ($currentVersion -lt $KeepVersion) {
+        Write-Host "Removing $($app.Name) version $($app.Version) for user $($app.PackageUserInformation.UserSecurityId)" -ForegroundColor Yellow
+        
+        try {
+            Remove-AppxPackage -Package $app.PackageFullName -AllUsers -ErrorAction Stop
+            Write-Host "✅ Successfully removed $($app.PackageFullName)" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "❌ Failed to remove $($app.PackageFullName): $_" -ForegroundColor Red
+        }
+    }
+    else {
+        Write-Host "Keeping $($app.Name) version $($app.Version)" -ForegroundColor Gray
+    }
+}
+
+# --- Step 5: Remove older provisioned packages ---
+foreach ($prov in $provisionedApps) {
+    $provVersion = [version]$prov.Version
+
+    if ($provVersion -lt $KeepVersion) {
+        Write-Host "`nRemoving provisioned package $($prov.DisplayName) version $($prov.Version)" -ForegroundColor Yellow
+
+        try {
+            Remove-AppxProvisionedPackage -Online -PackageName $prov.PackageName -ErrorAction Stop | Out-Null
+            Write-Host "✅ Successfully removed provisioned package $($prov.PackageName)" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "❌ Failed to remove provisioned package $($prov.PackageName): $_" -ForegroundColor Red
+        }
+    }
+    else {
+        Write-Host "Keeping provisioned package $($prov.DisplayName) version $($prov.Version)" -ForegroundColor Gray
+    }
+}
+
+# --- Step 6: Add/Update provisioned package for future users ---
+Write-Host "`nEnsuring correct version is provisioned for new users..." -ForegroundColor Cyan
+
+try {
+    $localPackage = Get-ChildItem -Path $PSScriptRoot -Include *.appx, *.appxbundle -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "Microsoft.RawImage*" } | Select-Object -First 1
+
+    if ($null -ne $localPackage) {
+        Add-AppxProvisionedPackage -Online -PackagePath $localPackage.FullName -SkipLicense -ErrorAction Stop | Out-Null
+        Write-Host "✅ Successfully added $($localPackage.Name) as provisioned package" -ForegroundColor Green
+    }
+    else {
+        Write-Host "⚠️ No local package found for provisioning. Skipping provision step." -ForegroundColor Yellow
+    }
+}
+catch {
+    Write-Host "❌ Failed to add provisioned package: $_" -ForegroundColor Red
+}
+
+Write-Host "`n=== Script complete ===`n" -ForegroundColor Cyan
